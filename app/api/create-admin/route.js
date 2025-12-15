@@ -2,11 +2,21 @@
 // Access at: /api/create-admin?email=admin@admin.local&password=yourpassword&username=admin
 import { NextResponse } from "next/server";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/app/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+
+// Dynamic import to avoid build-time errors
+async function getFirebase() {
+  const { auth, db } = await import("@/app/lib/firebase");
+  if (!auth || !db) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  return { auth, db };
+}
 
 export async function GET(request) {
   try {
+    const { auth, db } = await getFirebase();
+    
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
     const password = searchParams.get("password");

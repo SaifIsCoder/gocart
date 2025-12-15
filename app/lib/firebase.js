@@ -4,20 +4,34 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.API_KEY,
+  authDomain: process.env.AUTH_DOMAIN,
+  projectId: process.env.PROJECT_ID,
+  storageBucket: process.env.STORAGE_BUCKET,
+  messagingSenderId: process.env.SENDER_ID,
+  appId: process.env.APP_ID,
+  measurementId: process.MEASUREMENT_ID,
 };
 
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  throw new Error("Missing Firebase configuration. Please check your environment variables.");
+// Initialize Firebase only if config is available
+// This prevents build-time errors when env vars are missing
+let app = null;
+let auth = null;
+let db = null;
+let storage = null;
+
+if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+  } catch (error) {
+    console.warn("Firebase initialization error:", error);
+  }
+} else if (process.env.NODE_ENV !== 'production') {
+  // Only warn in development, not during build
+  console.warn("Firebase configuration missing. Some features may not work.");
 }
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export { auth, db, storage };

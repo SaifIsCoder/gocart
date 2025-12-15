@@ -1,7 +1,15 @@
 // API route to seed products - accessible at /api/seed-products
 import { NextResponse } from "next/server";
-import { db } from "@/app/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+
+// Dynamic import to avoid build-time errors
+async function getDb() {
+  const { db } = await import("@/app/lib/firebase");
+  if (!db) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  return db;
+}
 
 const products = [
   {
@@ -155,6 +163,7 @@ const products = [
 
 export async function GET() {
   try {
+    const db = await getDb();
     const addedProducts = [];
     
     for (const product of products) {
@@ -175,7 +184,8 @@ export async function GET() {
     console.error("Error seeding products:", error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: error.message,
+      hint: "Make sure Firebase environment variables are set correctly."
     }, { status: 500 });
   }
 }
