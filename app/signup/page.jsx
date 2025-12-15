@@ -133,6 +133,13 @@ export default function SignupPage() {
 
     setLoading(true);
 
+    if (!auth) {
+      setError("Firebase authentication is not initialized. Please check your configuration.");
+      toast.error("Authentication service unavailable");
+      setLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,

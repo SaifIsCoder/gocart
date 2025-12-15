@@ -25,6 +25,13 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    if (!auth) {
+      setError("Firebase authentication is not initialized. Please check your configuration.");
+      toast.error("Authentication service unavailable");
+      setLoading(false);
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success("Login successful!");
@@ -48,6 +55,11 @@ export default function LoginPage() {
     e.preventDefault();
     if (!resetEmail) {
       toast.error("Please enter your email address");
+      return;
+    }
+
+    if (!auth) {
+      toast.error("Firebase authentication is not initialized. Please check your configuration.");
       return;
     }
 

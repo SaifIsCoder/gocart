@@ -22,13 +22,20 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
+    if (!auth) {
+      setError("Firebase authentication is not initialized. Please check your configuration.");
+      toast.error("Authentication service unavailable");
+      setLoading(false);
+      return;
+    }
+
     try {
       // Login with actual email address
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
       // Verify admin status
       const adminStatus = await isAdmin(userCredential.user.uid);
-      if (!adminStatus) {
+      if (!adminStatus && auth) {
         await auth.signOut();
         setError("You are not authorized as an admin. This account does not have admin privileges.");
         toast.error("Access denied. Admin privileges required.");

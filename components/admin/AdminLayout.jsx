@@ -26,6 +26,15 @@ const AdminLayout = ({ children }) => {
             return
         }
 
+        // Check if auth is available
+        if (!auth) {
+            console.warn("Firebase auth is not initialized");
+            setIsAdminUser(false)
+            setLoading(false)
+            router.push("/admin/login")
+            return
+        }
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const adminStatus = await isAdmin(user.uid)

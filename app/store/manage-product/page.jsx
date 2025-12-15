@@ -14,6 +14,12 @@ export default function StoreManageProducts() {
     const [products, setProducts] = useState([])
 
     useEffect(() => {
+        if (!auth) {
+            console.warn("Firebase auth is not initialized");
+            setLoading(false);
+            return;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser)
             if (currentUser) {

@@ -27,6 +27,12 @@ export default function StoreAddProduct() {
     })
 
     useEffect(() => {
+        if (!auth) {
+            console.warn("Firebase auth is not initialized");
+            setLoading(false);
+            return;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser)
             setLoading(false)

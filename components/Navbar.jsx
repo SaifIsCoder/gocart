@@ -17,6 +17,11 @@ const Navbar = () => {
     const cartCount = useSelector(state => state.cart.total)
 
     useEffect(() => {
+        if (!auth) {
+            console.warn("Firebase auth is not initialized");
+            return;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
         });
@@ -24,6 +29,11 @@ const Navbar = () => {
     }, []);
 
     const handleLogout = async () => {
+        if (!auth) {
+            toast.error("Firebase auth is not initialized");
+            return;
+        }
+
         try {
             await signOut(auth);
             toast.success("Logged out successfully");

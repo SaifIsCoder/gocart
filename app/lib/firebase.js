@@ -28,6 +28,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     storage = getStorage(app);
   } catch (error) {
     console.warn("Firebase initialization error:", error);
+    // auth will remain null, components will handle this with null checks
   }
 } else if (process.env.NODE_ENV !== 'production') {
   // Only warn in development, not during build
