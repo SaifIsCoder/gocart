@@ -1,5 +1,7 @@
 // API route to create admin user and add to admins collection
 // Access at: /api/create-admin?email=admin@admin.local&password=yourpassword&username=admin
+'use client';
+
 import { NextResponse } from "next/server";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";

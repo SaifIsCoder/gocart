@@ -1,5 +1,7 @@
 // API route to seed products - accessible at /api/seed-products
 // Usage: Visit https://your-domain.vercel.app/api/seed-products
+'use client';
+
 import { NextResponse } from "next/server";
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 
