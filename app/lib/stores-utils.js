@@ -16,6 +16,9 @@ import { db } from "./firebase";
 // Get store by ID
 export async function getStoreById(storeId) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const storeRef = doc(db, "stores", storeId);
     const storeSnap = await getDoc(storeRef);
     
@@ -39,6 +42,9 @@ export async function getStoreById(storeId) {
 // Get store by username
 export async function getStoreByUsername(username) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const storesRef = collection(db, "stores");
     const q = query(storesRef, where("username", "==", username));
     const snapshot = await getDocs(q);
@@ -64,6 +70,9 @@ export async function getStoreByUsername(username) {
 // Get all stores
 export async function getAllStores() {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const storesRef = collection(db, "stores");
     const q = query(storesRef, orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);

@@ -18,6 +18,9 @@ import { storage } from "./firebase";
 // Get all products
 export async function getAllProducts() {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const productsRef = collection(db, "products");
     const q = query(productsRef, orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
@@ -42,6 +45,9 @@ export async function getAllProducts() {
 // Get product by ID
 export async function getProductById(productId) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const productRef = doc(db, "products", productId);
     const productSnap = await getDoc(productRef);
     
@@ -65,6 +71,9 @@ export async function getProductById(productId) {
 // Get products by store ID
 export async function getProductsByStoreId(storeId) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const productsRef = collection(db, "products");
     const q = query(productsRef, where("storeId", "==", storeId), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
@@ -89,6 +98,9 @@ export async function getProductsByStoreId(storeId) {
 // Get products by category
 export async function getProductsByCategory(category) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const productsRef = collection(db, "products");
     const q = query(productsRef, where("category", "==", category), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
@@ -113,6 +125,9 @@ export async function getProductsByCategory(category) {
 // Upload image to Firebase Storage
 export async function uploadProductImage(file, productId, imageIndex) {
   try {
+    if (!storage) {
+      throw new Error("Firebase Storage is not initialized. Please check your environment variables.");
+    }
     const storageRef = ref(storage, `products/${productId}/image_${imageIndex}_${Date.now()}`);
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
@@ -126,6 +141,9 @@ export async function uploadProductImage(file, productId, imageIndex) {
 // Add new product
 export async function addProduct(productData, imageFiles = []) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     // Upload images if provided
     let imageUrls = productData.images || [];
     
@@ -166,6 +184,9 @@ export async function addProduct(productData, imageFiles = []) {
 // Update product
 export async function updateProduct(productId, productData, newImageFiles = []) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const productRef = doc(db, "products", productId);
     
     let imageUrls = productData.images || [];
@@ -201,6 +222,9 @@ export async function updateProduct(productId, productData, newImageFiles = []) 
 // Delete product
 export async function deleteProduct(productId) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     await deleteDoc(doc(db, "products", productId));
     return true;
   } catch (error) {
@@ -212,6 +236,9 @@ export async function deleteProduct(productId) {
 // Toggle product stock
 export async function toggleProductStock(productId, inStock) {
   try {
+    if (!db) {
+      throw new Error("Firebase Firestore is not initialized. Please check your environment variables.");
+    }
     const productRef = doc(db, "products", productId);
     await updateDoc(productRef, {
       inStock: inStock,

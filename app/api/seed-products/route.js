@@ -1,6 +1,7 @@
 // API route to seed products - accessible at /api/seed-products
+// Usage: Visit https://your-domain.vercel.app/api/seed-products
 import { NextResponse } from "next/server";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 
 // Dynamic import to avoid build-time errors
 async function getDb() {
@@ -161,9 +162,28 @@ const products = [
   }
 ];
 
-export async function GET() {
+export async function GET(request) {
   try {
     const db = await getDb();
+    
+    // Check for force parameter in query string
+    const { searchParams } = new URL(request.url);
+    const force = searchParams.get("force") === "true";
+    
+    // Check if products already exist to prevent duplicate seeding
+    const productsRef = collection(db, "products");
+    const existingProducts = await getDocs(productsRef);
+    const existingCount = existingProducts.size;
+    
+    if (existingCount > 0 && !force) {
+      return NextResponse.json({ 
+        success: false, 
+        message: `Products already exist in database (${existingCount} products found).`,
+        hint: "To force re-seeding, add ?force=true to the URL: /api/seed-products?force=true",
+        existingCount: existingCount
+      }, { status: 400 });
+    }
+    
     const addedProducts = [];
     
     for (const product of products) {
@@ -178,14 +198,15 @@ export async function GET() {
     return NextResponse.json({ 
       success: true, 
       message: `Successfully seeded ${addedProducts.length} products`,
-      products: addedProducts 
+      products: addedProducts,
+      total: addedProducts.length
     });
   } catch (error) {
     console.error("Error seeding products:", error);
     return NextResponse.json({ 
       success: false, 
       error: error.message,
-      hint: "Make sure Firebase environment variables are set correctly."
+      hint: "Make sure Firebase environment variables are set correctly and Firestore rules allow writes."
     }, { status: 500 });
   }
 }

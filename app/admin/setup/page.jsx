@@ -32,6 +32,11 @@ export default function AdminSetupPage() {
       return;
     }
 
+    if (!db) {
+      toast.error("Firebase Firestore is not initialized. Please check your configuration.");
+      return;
+    }
+
     setAdding(true);
     try {
       await setDoc(doc(db, "admins", user.uid), {
