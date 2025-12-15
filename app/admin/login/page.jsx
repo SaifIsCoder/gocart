@@ -2,7 +2,7 @@
 
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/app/lib/firebase";
-import { isAdmin } from "@/app/lib/auth-utils";
+import { isAdmin, isAuthorizedAdminEmail } from "@/app/lib/auth-utils";
 import { useState } from "react";
 import AuthCard from "@/components/auth/AuthCard";
 import { Eye, EyeOff } from "lucide-react";
@@ -50,10 +50,19 @@ export default function AdminLoginPage() {
     }
 
     try {
+      // First check if email is authorized for admin login
+      const isAuthorized = await isAuthorizedAdminEmail(email);
+      if (!isAuthorized) {
+        setError("This email is not authorized for admin access. Only authorized admin emails can login.");
+        toast.error("Access denied. This email is not authorized for admin login.");
+        setLoading(false);
+        return;
+      }
+
       // Login with actual email address
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Verify admin status
+      // Verify admin status (double check)
       const adminStatus = await isAdmin(userCredential.user.uid);
       if (!adminStatus && auth) {
         await auth.signOut();

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
 // Check if user is admin
@@ -15,6 +15,26 @@ export async function isAdmin(userId) {
     return adminDoc.exists();
   } catch (error) {
     console.error("Error checking admin status:", error);
+    return false;
+  }
+}
+
+// Check if email is authorized for admin login
+export async function isAuthorizedAdminEmail(email) {
+  try {
+    if (!db) {
+      console.error("Firebase Firestore is not initialized");
+      return false;
+    }
+    
+    // Check if email exists in admins collection
+    const adminsRef = collection(db, "admins");
+    const q = query(adminsRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    
+    return !querySnapshot.empty;
+  } catch (error) {
+    console.error("Error checking authorized admin email:", error);
     return false;
   }
 }
