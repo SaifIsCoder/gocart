@@ -9,6 +9,8 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { validateEmail, validateText, validateUsername, validatePhone, validatePassword, handleTextInput, handleEmailInput } from "@/app/lib/validation";
+import { setUserSession } from "@/app/lib/session";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -64,50 +66,96 @@ export default function SignupPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+    
+    // Apply validation based on field type
+    if (name === "name") {
+      // Text field - prevent numbers
+      const textOnlyRegex = /^[a-zA-Z\s\-'.,]*$/;
+      if (textOnlyRegex.test(value) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors[name];
+            return newErrors;
+          });
+        }
+      } else {
+        setErrors((prev) => ({ ...prev, [name]: "Name should not contain numbers or special characters" }));
+      }
+    } else if (name === "email") {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Real-time email validation
+      if (value && !value.includes("@")) {
+        setErrors((prev) => ({ ...prev, [name]: "Email must contain @ symbol" }));
+      } else if (value) {
+        const emailValidation = validateEmail(value);
+        if (emailValidation) {
+          setErrors((prev) => ({ ...prev, [name]: emailValidation }));
+        } else {
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors[name];
+            return newErrors;
+          });
+        }
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    } else if (name === "username") {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Validate username
+      const usernameError = validateUsername(value);
+      if (usernameError) {
+        setErrors((prev) => ({ ...prev, [name]: usernameError }));
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      // Clear error for this field when user starts typing
+      if (errors[name]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
+    // Validate name - no numbers
+    const nameError = validateText(formData.name, "Name");
+    if (nameError) newErrors.name = nameError;
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
+    // Validate email - must have @
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone number";
-    }
+    // Validate phone
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) newErrors.phone = phoneError;
 
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
-    } else if (formData.username.toLowerCase().trim() === "admin") {
-      newErrors.username = "Username 'admin' is not allowed";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters";
-    }
+    // Validate username
+    const usernameError = validateUsername(formData.username);
+    if (usernameError) newErrors.username = usernameError;
 
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
+    // Validate password
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) newErrors.password = passwordError;
 
+    // Validate confirm password
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
@@ -158,6 +206,13 @@ export default function SignupPage() {
         email: formData.email,
         phone: formData.phone,
         username: formData.username,
+      });
+
+      // Set user session
+      setUserSession({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: formData.name,
       });
 
       toast.success("Account created successfully!");

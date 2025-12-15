@@ -8,6 +8,8 @@ import AuthCard from "@/components/auth/AuthCard";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { validateEmail } from "@/app/lib/validation";
+import { setUserSession } from "@/app/lib/session";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -16,11 +18,29 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setEmailError("");
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (emailValidation) {
+      setEmailError(emailValidation);
+      toast.error(emailValidation);
+      setLoading(false);
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required");
+      toast.error("Password is required");
+      setLoading(false);
+      return;
+    }
 
     if (!auth) {
       setError("Firebase authentication is not initialized. Please check your configuration.");
@@ -41,6 +61,14 @@ export default function AdminLoginPage() {
         toast.error("Access denied. Admin privileges required.");
         return;
       }
+      
+      // Set user session
+      setUserSession({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+        isAdmin: true,
+      });
       
       toast.success("Admin login successful!");
       router.push("/admin");
@@ -72,10 +100,24 @@ export default function AdminLoginPage() {
               placeholder="Admin Email"
               required
               autoComplete="email"
-              className="w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+                emailError ? "border-red-500 focus:ring-red-500" : "focus:ring-indigo-500"
+              }`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setEmail(value);
+                if (value && !value.includes("@")) {
+                  setEmailError("Email must contain @ symbol");
+                } else if (value) {
+                  const emailValidation = validateEmail(value);
+                  setEmailError(emailValidation || "");
+                } else {
+                  setEmailError("");
+                }
+              }}
             />
+            {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
             <p className="text-xs text-gray-500 mt-1">Enter your admin email address</p>
           </div>
 

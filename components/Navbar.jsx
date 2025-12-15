@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "@/app/lib/firebase";
 import toast from "react-hot-toast";
+import { clearUserSession } from "@/app/lib/session";
 
 const Navbar = () => {
 
@@ -37,6 +38,7 @@ const Navbar = () => {
 
         try {
             await signOut(auth);
+            clearUserSession(); // Clear session and cookies
             toast.success("Logged out successfully");
             router.push("/");
         } catch (error) {

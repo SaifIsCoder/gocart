@@ -8,6 +8,8 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { validateEmail } from "@/app/lib/validation";
+import { setUserSession } from "@/app/lib/session";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,14 +18,33 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [resetEmailError, setResetEmailError] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setEmailError("");
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (emailValidation) {
+      setEmailError(emailValidation);
+      toast.error(emailValidation);
+      setLoading(false);
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required");
+      toast.error("Password is required");
+      setLoading(false);
+      return;
+    }
 
     if (!auth) {
       setError("Firebase authentication is not initialized. Please check your configuration.");
@@ -33,7 +54,15 @@ export default function LoginPage() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Set user session
+      setUserSession({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+      });
+      
       toast.success("Login successful!");
       router.push("/");
     } catch (err) {
@@ -53,8 +82,13 @@ export default function LoginPage() {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    if (!resetEmail) {
-      toast.error("Please enter your email address");
+    setResetEmailError("");
+    
+    // Validate email
+    const emailValidation = validateEmail(resetEmail);
+    if (emailValidation) {
+      setResetEmailError(emailValidation);
+      toast.error(emailValidation);
       return;
     }
 
@@ -88,10 +122,24 @@ export default function LoginPage() {
                   placeholder="Email"
                   required
                   autoComplete="email"
-                  className="w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+                    emailError ? "border-red-500 focus:ring-red-500" : "focus:ring-indigo-500"
+                  }`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEmail(value);
+                    if (value && !value.includes("@")) {
+                      setEmailError("Email must contain @ symbol");
+                    } else if (value) {
+                      const emailValidation = validateEmail(value);
+                      setEmailError(emailValidation || "");
+                    } else {
+                      setEmailError("");
+                    }
+                  }}
                 />
+                {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
               </div>
 
               <div className="relative">
@@ -147,15 +195,31 @@ export default function LoginPage() {
               Enter your email address and we'll send you a link to reset your password.
             </p>
             <form onSubmit={handleForgotPassword} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                required
-                autoComplete="email"
-                className="w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-              />
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  required
+                  autoComplete="email"
+                  className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 ${
+                    resetEmailError ? "border-red-500 focus:ring-red-500" : "focus:ring-indigo-500"
+                  }`}
+                  value={resetEmail}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setResetEmail(value);
+                    if (value && !value.includes("@")) {
+                      setResetEmailError("Email must contain @ symbol");
+                    } else if (value) {
+                      const emailValidation = validateEmail(value);
+                      setResetEmailError(emailValidation || "");
+                    } else {
+                      setResetEmailError("");
+                    }
+                  }}
+                />
+                {resetEmailError && <p className="mt-1 text-xs text-red-500">{resetEmailError}</p>}
+              </div>
               <div className="flex gap-2">
                 <button
                   type="button"
